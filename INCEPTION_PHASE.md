@@ -22,7 +22,7 @@ As a result, bookstores may experience:
 There is therefore a need for a computerized Book Store Management System that automates sales transactions, inventory tracking, and reporting to improve efficiency, accuracy, and overall business performance.
 
 # Business Case
-The proposed Book Store Management System aims to improve the efficiency and accuracy of bookstore operations. By replacing manual processes with a computerized system, the bookstore will be able to operate more effectively and make better business decisions.
+The proposed Book Store Management System aims to improve operational efficiency and accuracy by replacing manual sales and inventory processes with a computerized system. Currently, manual record-keeping leads to pricing errors, inaccurate stock levels, and time-consuming report generation. The new system is expected to reduce transaction time, minimize stock discrepancies, improve financial reporting accuracy, and support better decision-making. Although the system will require investment in software development, hardware, and staff training, the anticipated benefits in operational efficiency, reduced losses, and improved customer service justify the investment.
 
 ## Business Objectives
 1. Improve checkout speed during book purchases
