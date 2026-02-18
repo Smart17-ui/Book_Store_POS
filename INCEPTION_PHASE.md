@@ -157,25 +157,25 @@ Refine requirements and establish a strong architectural foundation while addres
 2. UML diagrams (Use Case, Domain Model, Sequence Diagrams)
 3. Core system design
 
-#Construction Phase
-#Purpose:
+## Construction Phase
+### Purpose:
 Develop and test the system features through iterative implementation.
-#Focus Areas:
+#### Focus Areas:
 1. Implementing system features
 2. Building the user interface
 3. Integrating hardware components (if applicable)
 4. Conducting testing
 
-#Planned Iterations May Include:
+#### Planned Iterations May Include:
 1. Iteration 1: Process Sale
 2. Iteration 2: Inventory Management
 3. Iteration 3: Reporting
 4. Iteration 4: Payment Handling
 
-#Transition Phase
-#Purpose:
+## Transition Phase
+### Purpose:
 Deploy the system and ensure it is ready for real-world use.
-#Focus Areas:
+#### Focus Areas:
 1. System deployment
 2. User training
 3. Fixing identified defects
