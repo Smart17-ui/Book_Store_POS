@@ -167,10 +167,10 @@ Develop and test the system features through iterative implementation.
 4. Conducting testing
 
 #### Planned Iterations May Include:
-1. Iteration 1: Process Sale
-2. Iteration 2: Inventory Management
-3. Iteration 3: Reporting
-4. Iteration 4: Payment Handling
+1. **Iteration 1: Process Sale**
+2. **Iteration 2: Inventory Management**
+3. **Iteration 3: Reporting**
+4. **Iteration 4: Payment Handling**
 
 ## Transition Phase
 ### Purpose:
