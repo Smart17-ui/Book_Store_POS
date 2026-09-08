@@ -19,7 +19,7 @@ source .venv/bin/activate
 python manage.py runserver 127.0.0.1:8000
 ```
 
-Set `VITE_CASHIER_ID` to an active backend `User` UUID to enable checkout and inventory adjustments. The current backend does not expose authentication endpoints, so the local role selector is a development-only preview until server-side authentication is added.
+Set `VITE_CASHIER_ID` to an active backend `User` UUID to enable checkout and inventory adjustments. The frontend uses the backend authentication endpoints for account signup, owner onboarding, administrator login, and cashier PIN login.
 
 ## Implemented API workflows
 
@@ -31,6 +31,7 @@ Set `VITE_CASHIER_ID` to an active backend `User` UUID to enable checkout and in
 - Returns through `/api/returns/process/`
 - Inventory adjustments through `/api/inventory/adjust/`
 - Sales reports with JSON, CSV, and PDF exports
+- Company onboarding with POS identity, branches, and owner-linked accounts
 
 ## Build
 

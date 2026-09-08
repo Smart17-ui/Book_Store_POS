@@ -16,9 +16,11 @@ from .models import Sale, SaleItem
 def process_sale(*, cashier, customer=None, sale_number=None, items, payment_method_type,
                 tendered_amount=None, payment_reference='', discount_amount=Decimal('0')):
     cashier = User.objects.get(pk=cashier, is_active=True)
+    if not cashier.client_id:
+        raise ValidationError({'cashier': 'Cashier must belong to a company.'})
     if customer:
         from .models import Customer
-        customer = Customer.objects.get(pk=customer)
+        customer = Customer.objects.get(pk=customer, client_id=cashier.client_id)
 
     if not items:
         raise ValidationError({'items': 'At least one item is required.'})
@@ -49,6 +51,7 @@ def process_sale(*, cashier, customer=None, sale_number=None, items, payment_met
             inventory = Inventory.objects.select_for_update().select_related('product').get(
                 product__sku=sku,
                 product__is_active=True,
+                product__client_id=cashier.client_id,
             )
         except Inventory.DoesNotExist as exc:
             raise ValidationError({'items': f'Active inventory was not found for SKU {sku}.'}) from exc

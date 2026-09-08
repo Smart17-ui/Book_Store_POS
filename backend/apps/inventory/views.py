@@ -5,28 +5,49 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from apps.common.models import AuditLog
+from apps.accounts.branch import request_branch
 from apps.accounts.models import User
+from apps.accounts.permissions import RolePermission
 
 from .models import Category, Inventory, InventoryAdjustment, Product
-from .serializers import AdjustInventorySerializer, CategorySerializer, InventoryAdjustmentSerializer, InventorySerializer, ProductSerializer
+from .serializers import AdjustInventorySerializer, CategorySerializer, InventoryAdjustmentSerializer, InventorySerializer, ProductSerializer, SetInventorySerializer
 
 
 class CategoryViewSet(ModelViewSet):
+    permission_classes = (RolePermission,)
+    allowed_roles = {
+        'read': {'OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'INVENTORY_MANAGER'},
+        'write': {'OWNER', 'ADMIN', 'MANAGER', 'INVENTORY_MANAGER'},
+    }
     queryset = Category.objects.all().order_by('name')
     serializer_class = CategorySerializer
 
+    def get_queryset(self):
+        return super().get_queryset().filter(client_id=self.request.user.client_id)
+
+    def perform_create(self, serializer):
+        serializer.save(client_id=self.request.user.client_id)
+
 
 class ProductViewSet(ModelViewSet):
+    permission_classes = (RolePermission,)
+    allowed_roles = {
+        'read': {'OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'INVENTORY_MANAGER'},
+        'write': {'OWNER', 'ADMIN', 'MANAGER', 'INVENTORY_MANAGER'},
+    }
     queryset = Product.objects.select_related('category', 'inventory').all().order_by('name')
     serializer_class = ProductSerializer
 
     def perform_create(self, serializer):
         with transaction.atomic():
-            product = serializer.save()
-            Inventory.objects.create(product=product)
+            product = serializer.save(client_id=self.request.user.client_id)
+            Inventory.objects.create(product=product, branch=request_branch(self.request))
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().filter(client_id=self.request.user.client_id)
+        branch = request_branch(self.request)
+        if branch:
+            queryset = queryset.filter(inventory__branch=branch)
         active = self.request.query_params.get('active')
         if active in {'true', 'false'}:
             return queryset.filter(is_active=active == 'true')
@@ -34,8 +55,41 @@ class ProductViewSet(ModelViewSet):
 
 
 class InventoryViewSet(ModelViewSet):
+    permission_classes = (RolePermission,)
+    allowed_roles = {'OWNER', 'ADMIN', 'MANAGER', 'INVENTORY_MANAGER'}
     queryset = Inventory.objects.select_related('product').all().order_by('product__name')
     serializer_class = InventorySerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset().filter(product__client_id=self.request.user.client_id)
+        branch = request_branch(self.request)
+        return queryset.filter(branch=branch) if branch else queryset
+
+    @action(detail=False, methods=['post'], url_path='set-level')
+    def set_level(self, request):
+        request_serializer = SetInventorySerializer(data=request.data)
+        request_serializer.is_valid(raise_exception=True)
+        data = request_serializer.validated_data
+        with transaction.atomic():
+            try:
+                user = User.objects.get(pk=data['adjusted_by'], is_active=True)
+                inventory = Inventory.objects.select_for_update().get(product__sku=data['sku'], product__client_id=request.user.client_id, branch=request_branch(request))
+            except (User.DoesNotExist, Inventory.DoesNotExist) as exc:
+                raise serializers.ValidationError({'detail': 'Active user and product inventory are required.'}) from exc
+            quantity_change = data['quantity_on_hand'] - inventory.quantity_on_hand
+            inventory.quantity_on_hand = data['quantity_on_hand']
+            for field in ('reorder_level', 'reorder_quantity'):
+                if field in data:
+                    setattr(inventory, field, data[field])
+            inventory.save()
+            InventoryAdjustment.objects.create(
+                inventory=inventory,
+                adjusted_by=user,
+                adjustment_type=InventoryAdjustment.AdjustmentType.MANUAL,
+                quantity_change=quantity_change,
+                reason='Inventory level set',
+            )
+        return Response(InventorySerializer(inventory).data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'], url_path='adjust')
     def adjust(self, request):
@@ -47,6 +101,8 @@ class InventoryViewSet(ModelViewSet):
                 user = User.objects.get(pk=data['adjusted_by'], is_active=True)
                 inventory = Inventory.objects.select_for_update().select_related('product').get(
                     product__sku=data['sku'],
+                    product__client_id=request.user.client_id,
+                    branch=request_branch(request),
                 )
             except (User.DoesNotExist, Inventory.DoesNotExist) as exc:
                 raise serializers.ValidationError({'detail': 'Active user and product inventory are required.'}) from exc
@@ -78,5 +134,12 @@ class InventoryViewSet(ModelViewSet):
 
 
 class InventoryAdjustmentViewSet(ModelViewSet):
+    permission_classes = (RolePermission,)
+    allowed_roles = {'OWNER', 'ADMIN', 'MANAGER', 'INVENTORY_MANAGER'}
     queryset = InventoryAdjustment.objects.select_related('inventory', 'adjusted_by').all().order_by('-adjustment_date')
     serializer_class = InventoryAdjustmentSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset().filter(inventory__product__client_id=self.request.user.client_id)
+        branch = request_branch(self.request)
+        return queryset.filter(inventory__branch=branch) if branch else queryset

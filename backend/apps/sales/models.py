@@ -3,12 +3,13 @@ from decimal import Decimal
 from django.core.validators import MinValueValidator
 from django.db import models
 
-from apps.accounts.models import User
+from apps.accounts.models import Client, User
 from apps.common.models import UUIDModel
 from apps.inventory.models import Product
 
 
 class Customer(UUIDModel):
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True, related_name='customers')
     first_name = models.CharField(max_length=80)
     last_name = models.CharField(max_length=80)
     phone = models.CharField(max_length=30, blank=True)

@@ -10,7 +10,7 @@ class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
         fields = '__all__'
-        read_only_fields = ('id', 'created_at', 'updated_at')
+        read_only_fields = ('id', 'client', 'created_at', 'updated_at')
 
 
 class SaleItemSerializer(serializers.ModelSerializer):
@@ -29,7 +29,7 @@ class SaleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sale
         fields = '__all__'
-        read_only_fields = ('id', 'created_at', 'updated_at', 'subtotal', 'total_amount')
+        read_only_fields = ('id', 'created_at', 'updated_at', 'subtotal', 'total_amount', 'cashier')
 
     def create(self, validated_data):
         items = validated_data.pop('items', [])

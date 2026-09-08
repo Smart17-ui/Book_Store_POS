@@ -7,6 +7,7 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = '__all__'
+        read_only_fields = ('client',)
 
 
 class InventorySerializer(serializers.ModelSerializer):
@@ -15,8 +16,8 @@ class InventorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Inventory
-        fields = '__all__'
-        extra_fields = ('product_name', 'product_sku')
+        fields = ('id', 'product', 'product_name', 'product_sku', 'quantity_on_hand', 'reorder_level', 'reorder_quantity', 'last_updated', 'created_at', 'updated_at')
+        read_only_fields = ('id', 'product_name', 'product_sku', 'last_updated', 'created_at', 'updated_at')
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -26,7 +27,7 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = '__all__'
-        read_only_fields = ('id', 'created_at', 'updated_at', 'inventory')
+        read_only_fields = ('id', 'client', 'created_at', 'updated_at', 'inventory')
 
 
 class InventoryAdjustmentSerializer(serializers.ModelSerializer):
@@ -43,3 +44,11 @@ class AdjustInventorySerializer(serializers.Serializer):
     quantity_change = serializers.DecimalField(max_digits=12, decimal_places=3)
     reason = serializers.CharField(max_length=255)
     reference_number = serializers.CharField(max_length=100, required=False, allow_blank=True)
+
+
+class SetInventorySerializer(serializers.Serializer):
+    adjusted_by = serializers.UUIDField()
+    sku = serializers.CharField(max_length=80)
+    quantity_on_hand = serializers.DecimalField(max_digits=12, decimal_places=3, min_value=0)
+    reorder_level = serializers.DecimalField(max_digits=12, decimal_places=3, min_value=0, required=False)
+    reorder_quantity = serializers.DecimalField(max_digits=12, decimal_places=3, min_value=0, required=False)
