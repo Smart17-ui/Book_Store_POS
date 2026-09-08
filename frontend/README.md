@@ -2,6 +2,10 @@
 
 Vite + React frontend for the Bookstore POS API.
 
+## System design
+
+- [ER diagram](../docs/ER_DIAGRAM.md)
+
 ## Run locally
 
 ```bash
